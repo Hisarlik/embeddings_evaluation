@@ -1,0 +1,94 @@
+# Flask RAG Application Examples
+
+## 1. Create Dataset
+### Request:
+curl -X POST http://localhost:5000/dataset \
+-H "Content-Type: application/json" \
+-d '{
+    "user_id": "user123",
+    "dataset_name": "my_dataset",
+    "markdown_texts": ["# Title\nThis is some markdown content", "# Another document\nMore content here"]
+}'
+
+### Expected Response:
+{
+    "message": "Dataset my_dataset created successfully",
+    "chunks": 2
+}
+
+## 2. Finetune Embeddings
+### Request:
+curl -X POST http://localhost:5000/finetune \
+-H "Content-Type: application/json" \
+-d '{
+    "user_id": "user123",
+    "dataset_name": "my_dataset",
+    "input_embeddings_model": "openai"
+}'
+
+### Expected Response:
+{
+    "message": "Embeddings created successfully",
+    "embeddings_count": 2
+}
+
+## 3. Evaluate Retriever
+### Request:
+curl -X POST http://localhost:5000/evaluate \
+-H "Content-Type: application/json" \
+-d '{
+    "user_id": "user123",
+    "dataset_name": "my_dataset",
+    "query": "What is the content about?",
+    "input_embeddings_model": "openai"
+}'
+
+### Expected Response:
+{
+    "results": [
+        {
+            "content": "# Title\nThis is some markdown content",
+            "similarity_score": 0.89
+        },
+        {
+            "content": "# Another document\nMore content here",
+            "similarity_score": 0.75
+        }
+    ]
+}
+
+# Notes:
+1. Make sure to replace 'your_openai_api_key' in the .env file with your actual OpenAI API key
+2. The similarity scores shown are examples and will vary based on actual content and embeddings
+3. The application must be running (python app.py) before executing these commands
+4. All requests require Content-Type: application/json header
+5. Available embedding models: "openai" and "huggingface"
+
+# Error Examples:
+
+## Missing Parameters:
+curl -X POST http://localhost:5000/dataset \
+-H "Content-Type: application/json" \
+-d '{
+    "user_id": "user123"
+}'
+
+### Expected Error Response:
+{
+    "error": "Missing required parameters"
+}
+
+## Invalid Dataset:
+curl -X POST http://localhost:5000/evaluate \
+-H "Content-Type: application/json" \
+-d '{
+    "user_id": "user123",
+    "dataset_name": "nonexistent_dataset",
+    "query": "test query",
+    "input_embeddings_model": "openai"
+}'
+
+### Expected Error Response:
+{
+    "error": "Dataset not found"
+} 

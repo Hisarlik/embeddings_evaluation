@@ -1,0 +1,11 @@
+flask==3.0.0
+langchain==0.1.0
+langchain-openai==0.0.5
+langchain-community==0.0.13
+langchain-core==0.1.10
+langchain-text-splitters==0.0.1
+langchain_huggingface==0.0.5
+unstructured==0.10.30
+nest-asyncio==1.5.8
+python-dotenv==1.0.0
+pydantic==2.5.2
