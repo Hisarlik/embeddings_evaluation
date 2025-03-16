@@ -97,3 +97,6 @@ site/
 # Temporary files
 tmp/
 temp/ 
+
+#models
+models/*
