@@ -98,5 +98,3 @@ site/
 tmp/
 temp/ 
 
-#models
-models/*
