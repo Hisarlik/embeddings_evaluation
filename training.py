@@ -15,7 +15,13 @@ from langchain_community.vectorstores import FAISS
 from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_core.documents import Document
 
-device = torch.device('mps')
+# Device setup
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
+    print("Using MPS device")
+else:
+    device = torch.device("cpu")
+    print("MPS device not found, using CPU")
 
 def load_json_file(file_path):
     """
@@ -61,7 +67,7 @@ def evaluate(
 data_dir = "data_clean"  # Relative path from the project root
 
 # configure embeddings training batch size 
-BATCH_SIZE = 4
+BATCH_SIZE = 2
 
 # Embeddings base model to finetuning
 model_id = "Snowflake/snowflake-arctic-embed-m"
@@ -90,14 +96,6 @@ for query_id, query in train_queries.items():
         example = InputExample(texts=[query, text])
         examples.append(example)
         
-        # Print first example to inspect the data
-        if len(examples) == 1:
-            print("\nFirst example:")
-            print(f"Query ID: {query_id}")
-            print(f"Query text: {query}")
-            print(f"Document ID: {doc_id}")
-            print(f"Document text: {text[:200]}...")  # Print first 200 chars of the document
-            print("-" * 50)
             
     except:
         print(f"Error processing query_id: {query_id}")
@@ -110,14 +108,16 @@ loader = DataLoader(
 
 #Loading base model
 model = SentenceTransformer(model_id, trust_remote_code=True)
+model = model.to(device)
 
-
+# Define loss function
 matryoshka_dimensions = [768, 512, 256, 128, 64]
 inner_train_loss = MultipleNegativesRankingLoss(model)
 train_loss = MatryoshkaLoss(
     model, inner_train_loss, matryoshka_dims=matryoshka_dimensions
 )
 
+# Define validation data
 val_corpus = val_data['corpus']
 val_queries = val_data['questions']
 val_relevant_docs = val_data['relevant_contexts']
@@ -132,6 +132,7 @@ valores_relevant_docs = set(tuple(valor) for valor in val_relevant_docs.values()
 
 warmup_steps = int(len(loader) * EPOCHS * 0.1)
 
+# Finetune embeddings
 model.fit(
     train_objectives=[(loader, train_loss)],
     epochs=EPOCHS,
@@ -146,9 +147,11 @@ model.fit(
     # use_amp=True
 )
 
+# Evaluate finetuned embeddings
 finetune_embeddings = HuggingFaceEmbeddings(model_name="models/snowflake/finetuned_snowflake_clean")
 finetune_results = evaluate(test_data, finetune_embeddings)
 
+# Convert results to DataFrame and calculate hit rate
 finetune_results_df = pd.DataFrame(finetune_results)
 finetune_hit_rate = finetune_results_df["is_hit"].mean()
 finetune_hit_rate
