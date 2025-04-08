@@ -6,9 +6,10 @@ from sentence_transformers.evaluation import InformationRetrievalEvaluator
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
-import pandas as pd
+from utils.huggingface_uploader import HuggingFaceUploader
 import tqdm
 import logging
+import os
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -17,13 +18,23 @@ logger = logging.getLogger(__name__)
 class TrainingModel:
     def __init__(self):
         logger.debug("Initializing TrainingModel")
-        self.device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
-        logger.debug(f"Using device: {self.device}")
+        # Check for available devices
+        if torch.cuda.is_available():
+            self.device = torch.device("cuda")
+            logger.debug("Using CUDA device")
+        else:
+            self.device = torch.device("cpu")
+            logger.debug("Using CPU device")
+            
+        # Create output directories if they don't exist
+        os.makedirs("models/snowflake", exist_ok=True)
+        
         self.dataset = None
         self.model = None
         self.train_data = None
         self.val_data = None
         self.test_data = None
+        self.model_output_path = 'models/snowflake/finetuned_snowflake_clean'
         
     def set_datasets(self, train_data, validation_data, test_data):
         """Set the datasets for training, validation and testing"""
@@ -117,7 +128,7 @@ class TrainingModel:
                 train_objectives=[(loader, train_loss)],
                 epochs=epochs,
                 warmup_steps=warmup_steps,
-                output_path='models/snowflake/finetuned_snowflake_clean',
+                output_path=self.model_output_path,
                 checkpoint_path="models/snowflake/finetuned_snowflake_clean_checkpoint",
                 checkpoint_save_steps=2000,
                 checkpoint_save_total_limit=3,
@@ -129,6 +140,28 @@ class TrainingModel:
         except Exception as e:
             logger.error(f"Error during training: {str(e)}")
             raise
+            
+    def upload_to_huggingface(self, repo_name, token):
+        """Upload the trained model to HuggingFace Hub"""
+        if not self.model:
+            raise ValueError("No trained model available to upload")
+            
+        try:
+            logger.debug("Initializing HuggingFace uploader")
+            uploader = HuggingFaceUploader(self.model_output_path)
+            
+            # Login to HuggingFace
+            logger.debug("Logging in to HuggingFace Hub")
+            uploader.login(token)
+            
+            # Upload model
+            logger.debug(f"Uploading model to {repo_name}")
+            uploader.upload_model(repo_name)
+            logger.debug("Model upload completed successfully")
+            
+        except Exception as e:
+            logger.error(f"Error uploading model to HuggingFace: {str(e)}")
+            raise
         
     def evaluate(self):
         """Evaluate the model on test data"""
@@ -136,7 +169,7 @@ class TrainingModel:
             raise ValueError("Model not trained yet")
             
         finetune_embeddings = HuggingFaceEmbeddings(
-            model_name="models/snowflake/finetuned_snowflake_clean"
+            model_name=self.model_output_path
         )
         
         corpus = self.test_data.get('corpus', {})

@@ -1,0 +1,174 @@
+/* CSS Variables for consistent theming */
+:root {
+    --primary-color: #0747A6;
+    --secondary-color: #253858;
+    --accent-color: #2684FF;
+    --background-color: #F5F6F8;
+    --surface-color: #FFFFFF;
+    --text-primary: #172B4D;
+    --text-secondary: #5E6C84;
+    --border-color: #DFE1E6;
+    --success-color: #36B37E;
+    --warning-color: #FFAB00;
+    --error-color: #FF5630;
+}
+
+/* Global Styles */
+.stApp {
+    background-color: var(--background-color);
+}
+
+.main .block-container {
+    padding-top: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header Styling */
+.company-header {
+    background-color: var(--surface-color);
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 2rem;
+    margin: -1rem -1rem 2rem -1rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.company-title {
+    color: var(--secondary-color);
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+/* Section Headers */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+/* Card Styling */
+.stCard {
+    background-color: var(--surface-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* File Uploader Styling */
+.stFileUploader {
+    background-color: var(--surface-color);
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.stFileUploader:hover {
+    border-color: var(--accent-color);
+    background-color: rgba(38, 132, 255, 0.02);
+}
+
+.upload-container {
+    background: var(--surface-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+}
+
+.upload-header {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+}
+
+.upload-description {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+/* Button Styling */
+.stButton > button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.625rem 1.25rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(7, 71, 166, 0.1);
+}
+
+.stButton > button:hover {
+    background-color: var(--accent-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(7, 71, 166, 0.2);
+}
+
+/* Input Fields Styling */
+.stNumberInput div[data-baseweb="input"] {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.stNumberInput div[data-baseweb="input"]:focus-within {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(38, 132, 255, 0.2);
+}
+
+.stTextInput div[data-baseweb="input"] {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.stTextInput div[data-baseweb="input"]:focus-within {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 2px rgba(38, 132, 255, 0.2);
+}
+
+/* Progress Bar and Spinner */
+.stProgress > div > div {
+    background-color: var(--accent-color);
+}
+
+.stSpinner > div {
+    border-top-color: var(--accent-color);
+}
+
+/* Alert/Message Styling */
+.stAlert {
+    border-radius: 6px;
+    border: none;
+    padding: 1rem;
+}
+
+.stSuccess {
+    background-color: rgba(54, 179, 126, 0.1);
+    color: var(--success-color);
+}
+
+.stWarning {
+    background-color: rgba(255, 171, 0, 0.1);
+    color: var(--warning-color);
+}
+
+.stError {
+    background-color: rgba(255, 86, 48, 0.1);
+    color: var(--error-color);
+} 
