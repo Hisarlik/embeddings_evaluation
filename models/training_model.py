@@ -10,6 +10,8 @@ from utils.huggingface_uploader import HuggingFaceUploader
 import tqdm
 import logging
 import os
+import zipfile
+import io
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -26,15 +28,15 @@ class TrainingModel:
             self.device = torch.device("cpu")
             logger.debug("Using CPU device")
             
-        # Create output directories if they don't exist
-        os.makedirs("models/snowflake", exist_ok=True)
+        # Create output directory if it doesn't exist
+        os.makedirs("embedding_model_output", exist_ok=True)
         
         self.dataset = None
         self.model = None
         self.train_data = None
         self.val_data = None
         self.test_data = None
-        self.model_output_path = 'models/snowflake/finetuned_snowflake_clean'
+        self.model_output_path = 'embedding_model_output'
         
     def set_datasets(self, train_data, validation_data, test_data):
         """Set the datasets for training, validation and testing"""
@@ -129,12 +131,10 @@ class TrainingModel:
                 epochs=epochs,
                 warmup_steps=warmup_steps,
                 output_path=self.model_output_path,
-                checkpoint_path="models/snowflake/finetuned_snowflake_clean_checkpoint",
-                checkpoint_save_steps=2000,
-                checkpoint_save_total_limit=3,
-                show_progress_bar=True,
+                save_best_model=True,
                 evaluator=evaluator,
-                evaluation_steps=2000
+                evaluation_steps=1000,
+                show_progress_bar=True
             )
             logger.debug("Training completed successfully")
         except Exception as e:
@@ -200,3 +200,35 @@ class TrainingModel:
             })
             
         return eval_results 
+
+    def get_model_download(self):
+        """Create a zip file of the trained model for download
+        
+        Returns:
+            tuple: (bytes, str) - The zip file as bytes and the filename
+        """
+        if not self.model or not os.path.exists(self.model_output_path):
+            raise ValueError("No trained model available to download")
+            
+        try:
+            # Create a BytesIO object to store the zip file
+            zip_buffer = io.BytesIO()
+            
+            # Create the zip file
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                # Walk through the model directory
+                for root, _, files in os.walk(self.model_output_path):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        # Calculate path relative to model directory for zip structure
+                        arcname = os.path.relpath(file_path, self.model_output_path)
+                        zip_file.write(file_path, arcname)
+                        
+            # Get the zip file as bytes
+            zip_buffer.seek(0)
+            model_name = os.path.basename(self.model_output_path)
+            return zip_buffer.getvalue(), f"{model_name}.zip"
+            
+        except Exception as e:
+            logger.error(f"Error creating model download zip: {str(e)}")
+            raise 

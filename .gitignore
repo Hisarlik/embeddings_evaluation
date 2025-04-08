@@ -100,3 +100,7 @@ temp/
 
 #cursor
 .cursor/*
+
+
+#models
+embedding_model_output/*

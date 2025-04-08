@@ -3,7 +3,17 @@ import json
 import logging
 import os
 import torch
+import base64
+from pathlib import Path
 
+
+def get_base64_encoded_image(image_path):
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
+
+# Load the logo image
+logo_path = Path("static/gao-techhub-logo.png")
+encoded_logo = get_base64_encoded_image(str(logo_path))
 
 torch.classes.__path__ = [os.path.join(torch.__path__[0], torch.classes.__file__)] 
 
@@ -76,9 +86,9 @@ def handle_file_upload(file):
 def main():
     try:
         # Add company header
-        st.markdown("""
+        st.markdown(f"""
             <div class="company-header">
-                <div class="company-title">NTT DATA GAO Tech Hub</div>
+                <img src="data:image/png;base64,{encoded_logo}" alt="GAO TechHub Logo" class="company-logo">
             </div>
         """, unsafe_allow_html=True)
 
@@ -131,6 +141,7 @@ def main():
                         <div class="upload-container">
                             <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Training Parameters</h2>
                             <p class="upload-description">Configure your model training parameters</p>
+                            <p class="upload-description">Select the base model for fine-tuning</p>
                         </div>
                     """, unsafe_allow_html=True)
                     
@@ -141,7 +152,12 @@ def main():
                     with col2:
                         epochs = st.number_input("Number of Epochs", min_value=1, value=1)
                     with col3:
-                        model_id = st.text_input("Model ID", value="Snowflake/snowflake-arctic-embed-m")
+                        model_options = [
+                            "Snowflake/snowflake-arctic-embed-m",
+                            "Snowflake/snowflake-arctic-embed-m-v2.0",
+                            "Alibaba-NLP/gte-modernbert-base"
+                        ]
+                        model_id = st.selectbox("Model ID", model_options)
                     
                     # Add HuggingFace upload section
                     st.markdown("""
@@ -160,6 +176,11 @@ def main():
                     if st.button("Start Training"):
                         with st.spinner("Training in progress..."):
                             try:
+                                # Delete embedding_model_output folder if it exists
+                                if os.path.exists("embedding_model_output"):
+                                    import shutil
+                                    shutil.rmtree("embedding_model_output")
+                                    
                                 controller.train(
                                     batch_size=batch_size,
                                     epochs=epochs,
@@ -175,7 +196,7 @@ def main():
                                     </div>
                                 """, unsafe_allow_html=True)
                                 results = controller.evaluate()
-                                view.display_results(results)
+                                view.display_results(results, model=controller.model)
                             except Exception as e:
                                 logger.error(f"Training error: {str(e)}")
                                 st.error("An error occurred during training. Please check the logs for details.")
