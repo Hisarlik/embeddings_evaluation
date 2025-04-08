@@ -13,4 +13,8 @@ class TrainingController:
         
     def evaluate(self):
         """Evaluate the model and return results"""
-        return self.model.evaluate() 
+        return self.model.evaluate()
+        
+    def upload_to_huggingface(self, repo_name, token):
+        """Upload the trained model to Hugging Face Hub"""
+        return self.model.upload_to_huggingface(repo_name, token) 

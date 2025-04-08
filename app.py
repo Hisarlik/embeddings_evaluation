@@ -54,6 +54,24 @@ def main():
                     results = controller.evaluate()
                     view.display_results(results)
                     
+                    # Add Hugging Face upload section
+                    st.subheader("Upload to Hugging Face")
+                    repo_name = st.text_input("Hugging Face Repository Name (e.g., username/model-name)")
+                    hf_token = st.text_input("Hugging Face Token", type="password")
+                    
+                    if st.button("Upload to Hugging Face"):
+                        if not repo_name:
+                            st.error("Please provide a repository name")
+                        elif not hf_token:
+                            st.error("Please provide your Hugging Face token")
+                        else:
+                            try:
+                                with st.spinner("Uploading model to Hugging Face..."):
+                                    controller.upload_to_huggingface(repo_name, hf_token)
+                                st.success(f"Model successfully uploaded to {repo_name}")
+                            except Exception as e:
+                                st.error(f"Error uploading model: {str(e)}")
+                    
         except json.JSONDecodeError:
             st.error("Invalid JSON file. Please upload valid JSON files.")
         except Exception as e:

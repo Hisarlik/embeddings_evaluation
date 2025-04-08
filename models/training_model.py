@@ -6,9 +6,12 @@ from sentence_transformers.evaluation import InformationRetrievalEvaluator
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
+from huggingface_hub import HfApi, login
 import pandas as pd
 import tqdm
 import logging
+import os
+from utils.huggingface_uploader import HuggingFaceUploader
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -167,3 +170,22 @@ class TrainingModel:
             })
             
         return eval_results 
+
+    def upload_to_huggingface(self, repo_name, token=None):
+        """Upload the trained model to Hugging Face Hub"""
+        logger.debug(f"Preparing to upload model to Hugging Face Hub: {repo_name}")
+        
+        if not self.model:
+            raise ValueError("Model not trained yet")
+            
+        try:
+            # Initialize uploader with the model path
+            uploader = HuggingFaceUploader("models/snowflake/finetuned_snowflake_clean")
+            
+            # Login and upload
+            uploader.login(token)
+            return uploader.upload_model(repo_name)
+            
+        except Exception as e:
+            logger.error(f"Error uploading model to Hugging Face Hub: {str(e)}")
+            raise 
