@@ -119,11 +119,11 @@ class TrainingModel:
                 warmup_steps=warmup_steps,
                 output_path='models/snowflake/finetuned_snowflake_clean',
                 checkpoint_path="models/snowflake/finetuned_snowflake_clean_checkpoint",
-                checkpoint_save_steps=500,
+                checkpoint_save_steps=2000,
                 checkpoint_save_total_limit=3,
                 show_progress_bar=True,
                 evaluator=evaluator,
-                evaluation_steps=100
+                evaluation_steps=2000
             )
             logger.debug("Training completed successfully")
         except Exception as e:
