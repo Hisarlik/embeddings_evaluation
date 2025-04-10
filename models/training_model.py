@@ -12,10 +12,25 @@ import logging
 import os
 import zipfile
 import io
+import streamlit as st
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+# --- Custom Callback ---
+class StreamlitCallback:
+    def __init__(self, total_epochs, progress_bar, status_text):
+        self.epoch = 0
+        self.total_epochs = total_epochs
+        self.progress_bar = progress_bar
+        self.status_text = status_text
+
+    def __call__(self, score, epoch, steps):
+        self.epoch += 1
+        progress = self.epoch / self.total_epochs
+        self.progress_bar.progress(progress)
+        self.status_text.text(f"Epoch {self.epoch}/{self.total_epochs} complete. Eval score: {score:.4f}")
 
 class TrainingModel:
     def __init__(self):
@@ -78,9 +93,17 @@ class TrainingModel:
         logger.debug(f"Created {len(examples)} training examples")
         return DataLoader(examples, batch_size=batch_size, shuffle=True)
     
-    def train(self, batch_size, epochs, model_id):
-        """Train the model"""
-        logger.debug(f"Starting training with batch_size={batch_size}, epochs={epochs}, model_id={model_id}")
+    def calculate_max_steps(self, batch_size, epochs):
+        """Calculate the maximum number of training steps and prepare the data loader
+        
+        Args:
+            batch_size (int): The batch size for training
+            epochs (int): The number of training epochs
+            
+        Returns:
+            tuple: (int, DataLoader) - The maximum number of training steps and the prepared data loader
+        """
+        logger.debug(f"Calculating max steps with batch_size={batch_size}, epochs={epochs}")
         
         # Prepare data
         loader = self.prepare_training_data(batch_size)
@@ -89,6 +112,23 @@ class TrainingModel:
         if len(loader) == 0:
             logger.error("DataLoader is empty")
             raise ValueError("DataLoader is empty. Please check your dataset.")
+        
+        # Calculate max steps
+        max_steps = len(loader) * epochs
+        
+        logger.debug(f"Training configuration:")
+        logger.debug(f"- Number of batches per epoch: {len(loader)}")
+        logger.debug(f"- Number of epochs: {epochs}")
+        logger.debug(f"- Total steps: {max_steps}")
+        
+        return max_steps, loader
+    
+    def train(self, batch_size, epochs, model_id, progress_bar=None, status_text=None):
+        """Train the model"""
+        logger.debug(f"Starting training with batch_size={batch_size}, epochs={epochs}, model_id={model_id}")
+        
+        # Calculate max steps and get the loader
+        max_steps, loader = self.calculate_max_steps(batch_size, epochs)
         
         # Initialize model
         logger.debug("Initializing model")
@@ -113,15 +153,13 @@ class TrainingModel:
         
         evaluator = InformationRetrievalEvaluator(val_queries, val_corpus, relevant_docs_filtered)
         
-        # Calculate warmup steps and max steps
-        warmup_steps = max(1, int(len(loader) * epochs * 0.1))
-        max_steps = len(loader) * epochs
+        # Calculate warmup steps
+        warmup_steps = max(1, int(max_steps * 0.1))
         
-        logger.debug(f"Training configuration:")
-        logger.debug(f"- Number of batches per epoch: {len(loader)}")
-        logger.debug(f"- Number of epochs: {epochs}")
-        logger.debug(f"- Total steps: {max_steps}")
         logger.debug(f"- Warmup steps: {warmup_steps}")
+        
+        # Create callback with progress tracking components
+        callback = StreamlitCallback(total_epochs=epochs, progress_bar=progress_bar, status_text=status_text) if progress_bar and status_text else None
         
         # Train the model
         logger.debug("Starting model.fit")
@@ -134,8 +172,10 @@ class TrainingModel:
                 save_best_model=True,
                 evaluator=evaluator,
                 evaluation_steps=1000,
-                show_progress_bar=True
+                show_progress_bar=False,
+                callback=callback
             )
+            st.success("Training complete!")
             logger.debug("Training completed successfully")
         except Exception as e:
             logger.error(f"Error during training: {str(e)}")

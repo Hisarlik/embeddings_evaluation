@@ -4,6 +4,7 @@ import logging
 import os
 import torch
 import base64
+import time
 from pathlib import Path
 
 
@@ -155,7 +156,8 @@ def main():
                         model_options = [
                             "Snowflake/snowflake-arctic-embed-m",
                             "Snowflake/snowflake-arctic-embed-m-v2.0",
-                            "Alibaba-NLP/gte-modernbert-base"
+                            "Alibaba-NLP/gte-modernbert-base",
+                            "nreimers/albert-small-v2"
                         ]
                         model_id = st.selectbox("Model ID", model_options)
                     
@@ -180,14 +182,23 @@ def main():
                                 if os.path.exists("embedding_model_output"):
                                     import shutil
                                     shutil.rmtree("embedding_model_output")
-                                    
+                                
+                                # Create progress tracking components
+                                progress_bar = st.progress(0)
+                                status_text = st.empty()
+                                   
                                 controller.train(
                                     batch_size=batch_size,
                                     epochs=epochs,
                                     model_id=model_id,
                                     hf_repo_name=hf_repo_name if hf_repo_name else None,
-                                    hf_token=hf_token if hf_token else None
+                                    hf_token=hf_token if hf_token else None,
+                                    progress_bar=progress_bar,
+                                    status_text=status_text
                                 )
+                                time.sleep(1)
+                                progress_bar.empty()
+                                status_text.empty()
                                 
                                 # Show evaluation results
                                 st.markdown("""
